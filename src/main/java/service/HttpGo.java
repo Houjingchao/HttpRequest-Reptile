@@ -2,7 +2,13 @@ package service;
 
 import crawler.HttpRequest;
 import Exception.HttpException;
+import crawler.HttpRequestBody;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 
 import java.io.UnsupportedEncodingException;
@@ -18,6 +24,8 @@ public class HttpGo {
     private HttpRequest request;
     private BasicHttpContext context;
     private CookieStore cookieStore;
+
+    private HttpRequestBase realRequest;
 
     public HttpGo(HttpRequest request, CookieStore cookieStore) {
         this.request = request;
@@ -68,10 +76,25 @@ public class HttpGo {
         return builder.toString();
     }
 
+    protected HttpRequestBase builRequesForm(String url) throws HttpException {
+        HttpRequestBody httpRequestBody = new HttpRequestBody(request.getMethod(), url);
+        byte[] bytes = request.getBody();
+        if (bytes != null) {
+            httpRequestBody.setEntity(new ByteArrayEntity(bytes));
+            return httpRequestBody;
+        }
+        List<BasicNameValuePair> formData = request.getFormData();
+        if (formData != null) {// build with forms
+            buildWithForms(httpRequestBody);
+        }
+        return httpRequestBody;
+    }
+
     private void initRealRequest() throws HttpException {
         String url = buildUrlWithParams();
         switch (request.getMethod()) {
             case "POST":
+                realRequest = builRequesForm(url);
                 break;
             case "GET":
                 break;
@@ -83,5 +106,14 @@ public class HttpGo {
 
     private void initClient() {
 
+    }
+
+    private void buildWithForms(HttpRequestBody requestBody) {
+        HttpEntityEnclosingRequestBase req = (HttpEntityEnclosingRequestBase) requestBody;
+        try {
+            UrlEncodedFormEntity encodedFormEntity = new UrlEncodedFormEntity(request.getFormData(), request.getCharset());
+        } catch (UnsupportedEncodingException e) {
+            throw new HttpException(e);
+        }
     }
 }
