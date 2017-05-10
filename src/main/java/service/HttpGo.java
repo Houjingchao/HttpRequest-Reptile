@@ -45,8 +45,9 @@ public class HttpGo {
      *
      * first params
      * second body
-     * third header
-     * fourth formparams
+     * third formparams
+     * fourth header
+     * fifth buildconfig
      */
 
     /**
@@ -100,7 +101,9 @@ public class HttpGo {
                 break;
             default:
                 System.out.println("do something");
+
         }
+        buildHeader();
 
     }
 
@@ -115,5 +118,16 @@ public class HttpGo {
         } catch (UnsupportedEncodingException e) {
             throw new HttpException(e);
         }
+    }
+
+    private void buildHeader() {
+        if (request.getHeader() == null) {
+            return;
+        }
+
+        for (Map.Entry<String, String> entry : request.getHeader().entrySet()) {
+            realRequest.setHeader(entry.getKey(), entry.getValue());
+        }
+
     }
 }
